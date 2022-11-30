@@ -1,0 +1,42 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="object.get_username" />
+          <option value="object.consultar_perfil" />
+          <option value="object.eliminar_utilizador" />
+          <option value="object.eliminar_jogador" />
+          <option value="object.desafios" />
+          <option value="object.get_nome" />
+          <option value="object.get_badge" />
+          <option value="object.get_desafios" />
+          <option value="object.get_data_criacao" />
+          <option value="object.get_data_ini" />
+          <option value="object.get_data_final" />
+          <option value="object.get_num_insc" />
+          <option value="object.get_limite_insc" />
+          <option value="object.get_etapas" />
+          <option value="object.get_inscritos_classi" />
+          <option value="object.randomizar_cod" />
+          <option value="object.esta_inscrito" />
+          <option value="object.etapa_atual" />
+          <option value="object.etapas_conc" />
+          <option value="object.inscritos_classi" />
+          <option value="object.adicionar_pont" />
+          <option value="object.nome" />
+          <option value="object.data_ini" />
+          <option value="object.data_final" />
+          <option value="object.adicionar_desafios" />
+          <option value="object.limite" />
+          <option value="object.n_insc" />
+          <option value="object.get_nome_cod" />
+          <option value="object.autenticar_cod" />
+          <option value="object.estatisticas" />
+          <option value="ui.jogo_singleplayer.botao_singleplayer" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
