@@ -1,6 +1,13 @@
 import json
+import time
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 import nodes
+from Evento import Evento
+from Trabalhador import Trabalhador
+
 
 def print_frontier_nodes(description,frontier_nodes: list):
 
@@ -13,6 +20,11 @@ def print_frontier_nodes(description,frontier_nodes: list):
         print("-*-")
     print("+++++++++++++++++")
 
+def escolha_custos(equipa: list, eventos: list ):
+
+    return eventos, equipa
+
+
 
 def main():
     with open("./graph.conf") as config_file:
@@ -21,47 +33,56 @@ def main():
         # Test: printing config file
         print("Configuração:", config)
 
-        root = nodes.Node("Gate 9", None, 0)
-        # All connections to Lisboa
-        frontier_nodes = []
-        open_nodes = []
-        for connection in config["connections"]:
-            if connection["node1"] == "Balcao de Vendas":
-                new_node = nodes.Node(connection["node2"], root, connection["cost"])
-                frontier_nodes.append(new_node)
-        open_nodes.append(root)
-        print_frontier_nodes("Lista de nos fronteira após abrir Lisboa", frontier_nodes)
+        equipa = []
+        for membro in config['equipa']:
+            equipa.append(Trabalhador(membro['nome'], membro['node0']))
 
-        end = False
-        goal_node_name = "Gate 10"
-        while end == False:
-            end = True
-            new_frontier_nodes = []
-            for node in frontier_nodes:
-                new_node_added = False
-                for connection in config["connections"]:
-                    if node.get_name() == connection["node1"]:
-                        new_node = nodes.Node(connection["node2"], node, connection["cost"])
-                        new_frontier_nodes.append(new_node)
-                        # Test
-                        print("Novo nó para a nova lista:", new_node.get_name())
-                        new_node_added = True
-                        # A new node was added, so we won't stop
-                        end = False
-                if new_node_added == False:
-                    # Test
-                    print("Nó não aberto para a nova lista:", node.get_name())
-                    new_frontier_nodes.append(node)
-                else:
-                    open_nodes.append(node)
-            # Test if the node is the goal
-            for node in new_frontier_nodes:
-                if node.get_name() == goal_node_name:
-                    print("Encontra o objetivo. Termina a construção da árvore.")
-                    end = True
-            frontier_nodes = new_frontier_nodes
+        eventos = {
+            1:{'localizacao':'Gate 1', 'num_elems':2, 'start_time':5,'estimated_dur':2, 'estado':'aguarda', 'elem_on':0, 'dur':0},
+            2:{'localizacao':'Gate 1', 'num_elems':2, 'start_time':10,'estimated_dur':2, 'estado':'aguarda', 'elem_on':0, 'dur':0},
+            3:{'localizacao':'Gate 1', 'num_elems':2, 'start_time':15,'estimated_dur':2, 'estado':'aguarda', 'elem_on':0, 'dur':0}
+                   }
+        historico = {}
 
-        print_frontier_nodes("Lista final dos nós fronteira", frontier_nodes)
+        for key in eventos.keys():
+            eventos[key] = Evento(eventos[key]['localizacao'], eventos[key]['num_elems'], eventos[key]['start_time'], eventos[key]['estimated_dur'], eventos[key]['estado'], eventos[key]['elem_on'], eventos[key]['dur'])
+
+
+        x=0
+        eventos_ativos = []
+        nomes_nodes = []
+        lista_edges = []
+
+        for node in config['connections']:
+            nomes_nodes.append(node['node1'])
+            lista_edges.append((node['node1'],node['node2']))
+
+        g = nx.DiGraph()
+        g.add_nodes_from(nomes_nodes)
+        g.add_edges_from(lista_edges)
+
+        nx.draw_networkx(g, arrows=True, node_shape= "s", node_color = "white")
+        plt.show()
+
+
+
+        while (x<100):
+
+            for evento in eventos.values():
+                eventos_ativos, historico = evento.update_status(x, eventos_ativos,historico)
+
+            #Chama método de escolha e distribuição de trabalhadores
+            escolha_custos(equipa, eventos)
+
+            print('Eventos ativos:',eventos_ativos)
+            print('Tempo atual', x)
+            print('Histórico',historico)
+            print()
+
+
+            time.sleep(1)
+            x+=1
+
 
 
 
