@@ -15,7 +15,7 @@ class Evento:
 
     def update_status(self, tempo: int, eventos_ativos: list, historico: dict):
         # Começou a hora
-        if self.start_time == tempo:
+        if tempo == self.start_time:
             self.estado = 'need_workers'
             eventos_ativos.append(self)
         # Se estava ativo e já foi trabalhado, acabar e adicionar ao historico

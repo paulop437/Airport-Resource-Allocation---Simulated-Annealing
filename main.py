@@ -8,6 +8,7 @@ import vertexs
 
 from Evento import Evento
 from Trabalhador import Trabalhador
+from data_process import data_Process
 
 
 def print_frontier_nodes(description, frontier_nodes: list):
@@ -46,6 +47,9 @@ def main():
 
     # Todo prework events
 
+    # TODO MASSIVE VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+    # Todo limit number of events running on each location to 1 at a time
+
     # Todo randomize time needed and size of team needed based on event elements
 
     # Active events are reoordered based on priority, these will be assigned workers first
@@ -70,23 +74,14 @@ def main():
         for membro in config['equipa']:
             equipa.append(Trabalhador(membro['nome'], membro['node0']))
 
-        eventos = {
-            1: {'localizacao': 'Gate 1', 'num_elems': 2, 'start_time': 5, 'estimated_dur': 5, 'estado': 'aguarda',
-                'elem_on': 0, 'dur': 0, 'priority': 0},
-            2: {'localizacao': 'Gate 2', 'num_elems': 2, 'start_time': 7, 'estimated_dur': 5, 'estado': 'aguarda',
-                'elem_on': 0, 'dur': 0, 'priority': 2},
-            3: {'localizacao': 'Gate 3', 'num_elems': 2, 'start_time': 15, 'estimated_dur': 5, 'estado': 'aguarda',
-                'elem_on': 0, 'dur': 0, 'priority': 0}
-        }
+        eventos = data_Process("./data.csv").get_events()
+
+        print(eventos[len(eventos)-1].start_time)
 
         historico = {}
 
-        for key in eventos.keys():
-            eventos[key] = Evento(eventos[key]['localizacao'], eventos[key]['num_elems'], eventos[key]['start_time'],
-                                  eventos[key]['estimated_dur'], eventos[key]['estado'], eventos[key]['elem_on'],
-                                  eventos[key]['dur'], eventos[key]['priority'])
-
-        x = 0
+        x = 1667934895
+        end = 1667954750
         eventos_ativos = []
         nomes_nodes = []
         lista_edges = []
@@ -106,12 +101,12 @@ def main():
         g.add_edges_from(lista_edges)
 
         nx.draw_networkx(g, arrows=True, node_shape="s", node_color="white")
-        # plt.show()
+        #plt.show()
 
-        while (x < 35):
+        while (x < 1667954750):
 
             # Update eventos que começam/acabam agora
-            for evento in eventos.values():
+            for evento in eventos:
                 eventos_ativos, historico = evento.update_status(x, eventos_ativos, historico)
 
             # Ordenar lista de eventos_ativos por priority
