@@ -2,7 +2,8 @@ import json
 import time
 import networkx as nx
 import matplotlib.pyplot as plt
-
+import random
+import math
 import nodes
 import vertexs
 
@@ -20,6 +21,7 @@ def print_frontier_nodes(description, frontier_nodes: list):
         print("Total cost:", node.get_total_cost())
         print("-*-")
     print("+++++++++++++++++")
+
 
 def calcular_time_till_point(lista_vertex, worker, evento):
     # USING DIRECT PATH, NOT SHORTEST
@@ -41,6 +43,46 @@ def priority_order(eventos_ativos):
     eventos_ativos = sorted(eventos_ativos, key=lambda x: x.priority, reverse=True)
     return eventos_ativos
 
+
+def simulated_annealing(initial_state):
+    """Peforms simulated annealing to find a solution"""
+    initial_temp = 90
+    final_temp = .1
+    alpha = 0.01
+
+    current_temp = initial_temp
+
+    # Start by initializing the current state with the initial state
+    current_state = initial_state
+    solution = current_state
+
+    while current_temp > final_temp:
+        neighbor = random.choice(get_neighbors(current_state))
+
+        # Check if neighbor is best so far
+        cost_diff = get_cost(current_state) - get_cost(neighbor)
+
+        # if the new solution is better, accept it
+        if cost_diff > 0:
+            solution = neighbor
+        # if the new solution is not better, accept it with a probability of e^(-cost/temp)
+        else:
+            if random.uniform(0, 1) < math.exp(-cost_diff / current_temp):
+                solution = neighbor
+        # decrement the temperature
+        current_temp -= alpha
+
+    return solution
+
+
+def get_cost(state):
+    """Calculates cost of the argument state for your solution."""
+    raise NotImplementedError
+
+
+def get_neighbors(state):
+    """Returns neighbors of the argument state for your solution."""
+    raise NotImplementedError
 
 def main():
     # Notes
