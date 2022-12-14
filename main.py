@@ -2,6 +2,7 @@ import json
 import time
 import networkx as nx
 import matplotlib.pyplot as plt
+import datetime
 
 import nodes
 import vertexs
@@ -41,18 +42,21 @@ def priority_order(eventos_ativos):
     eventos_ativos = sorted(eventos_ativos, key=lambda x: x.priority, reverse=True)
     return eventos_ativos
 
+def starttime_order(eventos):
+    eventos = sorted(eventos, key=lambda x: x.start_time, reverse=True)
+    return eventos
+
 
 def main():
     # Notes
-
     # Todo prework events
 
-    # TODO MASSIVE VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
     # Todo limit number of events running on each location to 1 at a time
 
     # Todo randomize time needed and size of team needed based on event elements
 
     # Active events are reoordered based on priority, these will be assigned workers first
+    # TODO Events on hold at a position should have top priority, followed by start time
 
     # Team currently been chosen by initial config order, not by distance or randomization
 
@@ -76,13 +80,19 @@ def main():
 
         eventos = data_Process("./data.csv").get_events()
 
-        print(eventos[len(eventos)-1].start_time)
+        #print(eventos[len(eventos)-1].start_time)
 
         historico = {}
 
-        x = 1667934895
-        end = 1667954750
+
+        idle_counter = 0
+        max_idle = 10
+        skip_margin = -5
+
+        x = eventos[0].start_time + skip_margin
         eventos_ativos = []
+        busy_locations = []
+
         nomes_nodes = []
         lista_edges = []
 
@@ -103,11 +113,13 @@ def main():
         nx.draw_networkx(g, arrows=True, node_shape="s", node_color="white")
         #plt.show()
 
-        while (x < 1667954750):
+        print("Size of event list : " + str(len(eventos)))
+        #while (x < 1667954750):
+        while (len(historico.values())<len(eventos)):
 
             # Update eventos que começam/acabam agora
             for evento in eventos:
-                eventos_ativos, historico = evento.update_status(x, eventos_ativos, historico)
+                eventos_ativos, historico ,busy_locations = evento.update_status(x, eventos_ativos, historico, busy_locations)
 
             # Ordenar lista de eventos_ativos por priority
             eventos_ativos = priority_order(eventos_ativos)
@@ -115,15 +127,15 @@ def main():
             # Não há eventos ativos, não é preciso fazer qualquer decisão ou movimento
             if len(eventos_ativos) == 0:
                 print("System on hold for events, the workers can rest.")
+                idle_counter += 1
             else:
+                idle_counter = 0
                 # Escolher trabalhadores que precisam de iniciar um movimento e dar-lhes assign a um evento
                 for evento in eventos_ativos:
                     if evento.estado == "need_workers":
                         n_necessary_workers = evento.num_elems
                         assigned_workers = 0
-
                         # TODO Ordenar equipa based on best statistics
-
                         for worker in equipa:
                             # Encontrar o melhor trabalhador livre
                             if worker.estado == "aguarda":
@@ -141,12 +153,12 @@ def main():
                 # Mover Trabalhadores, e atualizar evento se eles chegaram
                 for worker in equipa:
                     if worker.estado == "moving":
-                        print("Name : ", worker.nome, " -1 ")
                         worker.time_till_arrival -= 1
                         # Chegou ao destino
                         if worker.time_till_arrival <= 0:
                             worker.localizacao = worker.moving_to.localizacao
                             worker.moving_to.add_to_elems_on()
+                            worker.time_till_arrival = 0
                             worker.estado = "working"
                             worker.moving_to = ""
 
@@ -163,7 +175,7 @@ def main():
                                 worker.estado = "aguarda"
                                 print(worker)
                             # Atualizar estado do evento e adicionar ao historico
-                            eventos_ativos, historico = evento.update_status(x, eventos_ativos, historico)
+                            eventos_ativos, historico , busy_locations= evento.update_status(x, eventos_ativos, historico, busy_locations)
 
                 # Mostrar console log de informação
                 print('Eventos ativos:', )
@@ -171,13 +183,25 @@ def main():
                     print(evento)
                     for worker in evento.team:
                         print(worker)
-                print('Tempo atual', x)
-                print('Histórico', historico)
+                print('Current Time', datetime.datetime.fromtimestamp(x))
+                #print('Histórico', historico)
+                print("History Size: " + str(len(historico.values())))
                 print()
 
-            # Passagem de tempo independemente do estado do sistema
-            time.sleep(1)
-            x += 1
+            # Passagem de tempo ou time skip
+            if idle_counter <= max_idle:
+                time.sleep(1)
+                x += 1
+                temp = input("Press enter to continue. \n")
+            else:
+                idle_counter = 0
+                for evento in eventos:
+                    #Verificar o próximo evento a acontecer
+                    if evento.start_time >= x:
+                        x = (evento.start_time + skip_margin)
+                        break
+                print("For simulation purposes, time was skipped to " , datetime.datetime.fromtimestamp(x) , ".")
+
 
 
 main()
