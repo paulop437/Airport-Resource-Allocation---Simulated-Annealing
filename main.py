@@ -7,7 +7,7 @@ import datetime
 import nodes
 import vertexs
 
-from Evento import Evento
+
 from Trabalhador import Trabalhador
 from data_process import data_Process
 
@@ -176,6 +176,12 @@ def main():
                                 print(worker)
                             # Atualizar estado do evento e adicionar ao historico
                             eventos_ativos, historico , busy_locations= evento.update_status(x, eventos_ativos, historico, busy_locations)
+                    elif evento.estado == "locationinuse":
+                        if not evento.localizacao in busy_locations:
+                            #Faz a verificação se o evento estiver na "lista de espera" e o local já não estiver a ser
+                            # utilizado, coloca o evento seguinte na lista para need_workers
+                            evento.estado = "need_workers"
+                            busy_locations += [evento.localizacao]
 
                 # Mostrar console log de informação
                 print('Eventos ativos:', )
@@ -192,7 +198,7 @@ def main():
             if idle_counter <= max_idle:
                 time.sleep(1)
                 x += 1
-                temp = input("Press enter to continue. \n")
+                #temp = input("Press enter to continue. \n")
             else:
                 idle_counter = 0
                 for evento in eventos:

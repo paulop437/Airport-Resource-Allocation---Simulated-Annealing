@@ -1,6 +1,7 @@
 class Evento:
-    def __init__(self, localizacao: str, num_elems: int, start_time: int, estimated_dur: int, estado: str,
+    def __init__(self, id :int ,localizacao: str, num_elems: int, start_time: int, estimated_dur: int, estado: str,
         elems_on: int, dur: int, priority:int,type):
+        self.id = id
         self.localizacao = localizacao # Gate
         self.num_elems = num_elems # Elementos necessários
         self.start_time = start_time
@@ -39,7 +40,8 @@ class Evento:
         return eventos_ativos, historico, busy_locations
 
     def __str__(self):
-        return "\033[30;44m"+"-----EVENTO_LOG-----\n" + 'Localização: ' + str(self.localizacao) + '\n' + 'Workers Needed: ' + str(
+        return "\033[30;44m"+"-----EVENTO_LOG-----\n" + 'ID: ' + str(self.id) + '\n'+ 'Localização: ' + str(self.localizacao) + '\n' \
+               + 'Workers Needed: ' + str(
             self.num_elems) + '\n' + 'Current Workers:' + str(self.elems_on) + '\n' + 'Worked ticks: ' + str(self.dur) + '\n' + 'Ticks needed: ' + str(self.estimated_dur) + '\n' + 'State: ' + str(self.estado) + "\n--------------------\n" + "\033[m"
 
     def get_localizacao(self):
