@@ -5,7 +5,7 @@ class Evento:
         self.num_elems = num_elems # Elementos necessários
         self.start_time = start_time
         self.estimated_dur = estimated_dur # Ticks necessários
-        self.estado = estado # notstarttime , locationinuse , need_workers , wait_workers , active , ended
+        self.estado = estado # notstarttime ,  locationinuse , need_workers , wait_workers , active , ended
         self.elems_on = elems_on # Elementos no evento right now
         self.team = []
         self.dur = dur # Ticks worked

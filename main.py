@@ -16,9 +16,9 @@ def print_frontier_nodes(description, frontier_nodes: list):
     print("+++++++++++++++++")
     print(description)
     for node in frontier_nodes:
-        print("Name:", node.get_name())
-        print("Parent:", node.get_parent().get_name())
-        print("Total cost:", node.get_total_cost())
+        print("Name: ", node.get_name())
+        print("Parent: ", node.get_parent().get_name())
+        print("Total cost: ", node.get_total_cost())
         print("-*-")
     print("+++++++++++++++++")
 
