@@ -25,12 +25,12 @@ class data_Process():
 
         for index,departure in departures.iterrows():
             gate_choice = gates[random.randint(0,4)]
-            workers = random.randint(4,8) # Número de workers necessários
+            workers = random.randint(2,4) # Número de workers necessários
             estimated_dur = random.randint(10, 30)  # Tempo necessário to be completed
             priority = random.randint(0, 2)  # Prioridade definida
             event_list.append(Evento(departure[0],gate_choice, workers, departure[5], estimated_dur, "aguarda",0, 0, priority, "departure"))
 
-        #Ordenar eventos com base no start_time
-        new_list = sorted(event_list, key=lambda x:x.start_time)
+        #Ordenar eventos com base no estimated_start_time
+        new_list = sorted(event_list, key=lambda x:x.estimated_start_time)
 
         return new_list
