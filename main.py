@@ -197,6 +197,7 @@ def simulated_annealing(eventos, equipa,T_initial, T_min, alpha):
             T = T * alpha
             print("Solução atual:", evaluate_eventos(current_solution))
         print("Finnished")
+        print(current_solution)
         return current_solution
 
 
@@ -269,7 +270,14 @@ def neighbor_evento(current_solution, nomes_nodes, lista_nos, lista_vertex):
                                 print(member)"""
 
             # Ordenar lista de eventos_ativos por random
-            random.shuffle(eventos_ativos)
+            n = len(eventos_ativos)
+            if n:
+                i = random.randint(0, n - 1)
+                j = random.randint(0, n - 1)
+                evento_temp = eventos_ativos[i]
+                eventos_ativos[i] = eventos_ativos[j]
+                eventos_ativos[j] = evento_temp
+
 
             # Não há eventos ativos, não é preciso fazer qualquer decisão ou movimento
             if len(eventos_ativos) == 0:
@@ -279,7 +287,7 @@ def neighbor_evento(current_solution, nomes_nodes, lista_nos, lista_vertex):
                 # Escolher trabalhadores que precisam de iniciar um movimento e dar-lhes assign a um evento
                 for evento in eventos_ativos:
                     if evento.estado == "need_workers":
-                        evento.team = simulated_annealing_workers(equipa, evento, lista_vertex, 5000, 1, 0.99)
+                        evento.team = simulated_annealing_workers(equipa, evento, lista_vertex, 1000, 1, 0.99)
 
                 # Mover Trabalhadores, e atualizar evento se eles chegaram
                 for worker in equipa:
