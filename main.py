@@ -52,11 +52,16 @@ def starttime_order(eventos):
     return eventos
 
 
-def evaluate_evento(current_solution):
-    pass
+def evaluate_eventos(current_solution):
+    soma = 0
+    for lista_eventos in current_solution.values():
+        for evento in lista_eventos:
+            soma += evento.waiting_time
+    return soma
 
 
-def simulated_annealing(eventos, equipa):
+
+def simulated_annealing(eventos, equipa,T_initial, T_min, alpha):
 
     with open("./graph.conf") as config_file:
         # Reading the configuration file
@@ -142,21 +147,12 @@ def simulated_annealing(eventos, equipa):
                     if evento.estado == "active":
 
                         evento.dur += 1
-                        print("active")
-                        print(len(historico))
-                        print(len(evento.team), "LEN DA TEAM")
-                        print(evento.dur)
-                        print(evento.estimated_dur)
-                        for crlho in evento.team:
-                            print(crlho, "EQUIPA")
                         # Terminou o evento
                         if evento.dur >= evento.estimated_dur:
                             # Atualizar estado de trabalhadores quando evento acaba
-                            print(evento.team)
                             for worker in evento.team:
                                 worker.time_till_arrival = 5000
                                 worker.estado = "aguarda"
-                                print("work")
 
                             # Atualizar estado do evento e adicionar ao historico
                             eventos_ativos, historico, busy_locations = evento.update_status(x, eventos_ativos, historico,
@@ -181,11 +177,164 @@ def simulated_annealing(eventos, equipa):
                         x = (evento.estimated_start_time + skip_margin)
                         break
 
-
-
         current_solution = historico
-        current_obj_value = evaluate_evento(current_solution)
+        current_obj_value = evaluate_eventos(current_solution)
+        T = T_initial
 
+        while T > T_min:
+            new_solution = neighbor_evento(current_solution,nomes_nodes, lista_nos, lista_vertex)
+            new_obj_value = evaluate_eventos(new_solution)
+            print("Nova solução:", new_obj_value)
+            delta = new_obj_value - current_obj_value
+            if delta > 0 and new_obj_value > 0:
+                current_solution = new_solution
+                current_obj_value = new_obj_value
+            else:
+                p = exp(delta / T)
+                if rand() < p and new_obj_value > 0:
+                    current_solution = new_solution
+                    current_obj_value = new_obj_value
+            T = T * alpha
+            print("Solução atual:", evaluate_eventos(current_solution))
+        print("Finnished")
+        return current_solution
+
+
+def neighbor_evento(current_solution, nomes_nodes, lista_nos, lista_vertex):
+    with open("./graph.conf") as config_file:
+        # Reading the configuration file
+        config = json.load(config_file)
+        # Test: printing config file
+        # print("Configuração:", config)
+
+        equipa = []
+        for membro in config['equipa']:
+            equipa.append(Trabalhador(membro['nome'], membro['node0']))
+
+        eventos = data_Process("./data.csv").get_events()
+
+
+        historico = {}
+
+        idle_counter = 0
+        max_idle = 10
+        skip_margin = -5
+
+        x = eventos[0].estimated_start_time + skip_margin
+        eventos_ativos = []
+        busy_locations = []
+
+        stuck_counter = 0
+        stuck_number = 0
+        #while (x < 1667954750):
+        while (len(historico) < 45):
+
+            #print("Tamanho do histórico:",len(historico))
+            #print("Tamanho dos eventos ativos:",len(eventos_ativos))
+            if stuck_counter >= 20:
+                pass
+            if stuck_number == len(eventos_ativos):
+                stuck_counter += 1
+            else:
+                stuck_number = len(eventos_ativos)
+            # Update eventos que começam/acabam agora
+            for evento in eventos:
+                eventos_ativos, historico, busy_locations = evento.update_status(x, eventos_ativos, historico,
+                                                                                 busy_locations)
+            if stuck_counter >1000:
+                historico = {}
+                break
+                """for evento in eventos:
+                    if not evento in historico.values():
+                        #print("Tempo atual", x)
+                        #print("Espectável",evento.estimated_start_time)
+                        if x>evento.estimated_start_time:
+                            #print("DEVIA INICIAR RIGHT?")
+                            if evento.estado == 'ended':
+                                historico[evento.id] = evento
+                            print("Eventos ativos:",len(eventos_ativos))
+                            if len(eventos_ativos) ==0:
+                                print("Histórico:",len(historico))
+                                print("Locais ocupados:", len(busy_locations))
+                            print("Membros no evento:", len(evento.team))
+                            if len(evento.team) == 0:
+                                for membro in equipa:
+                                    print("Estado dos membros da equipa total:",membro.estado)
+                                    print("Localização do membro da equipa total:", membro.localizacao)
+                            print("Localização do evento:",evento.localizacao)
+                            print("Número de membros esperados:", evento.num_elems)
+                            print("Duração atual do evento:",evento.dur)
+                            print("Duração estimada:",evento.estimated_dur)
+                            for member in evento.team:
+                                print(member)"""
+
+            # Ordenar lista de eventos_ativos por random
+            random.shuffle(eventos_ativos)
+
+            # Não há eventos ativos, não é preciso fazer qualquer decisão ou movimento
+            if len(eventos_ativos) == 0:
+                idle_counter += 1
+            else:
+                idle_counter = 0
+                # Escolher trabalhadores que precisam de iniciar um movimento e dar-lhes assign a um evento
+                for evento in eventos_ativos:
+                    if evento.estado == "need_workers":
+                        evento.team = simulated_annealing_workers(equipa, evento, lista_vertex, 5000, 1, 0.99)
+
+                # Mover Trabalhadores, e atualizar evento se eles chegaram
+                for worker in equipa:
+                    if worker.estado == "moving":
+                        worker.time_till_arrival -= 1
+                        # Chegou ao destino
+                        if worker.time_till_arrival <= 0:
+                            worker.localizacao = worker.moving_to.localizacao
+                            worker.moving_to.add_to_elems_on(x)
+                            worker.time_till_arrival = 0
+                            worker.estado = "working"
+                            worker.moving_to = ""
+
+                # Trabalhar eventos que teem todos os trabalhadores necessários, aka +1 tick
+                for evento in eventos_ativos:
+                    if evento.estado == "active":
+                        if stuck_counter>15:
+                            #print(evento)
+                            #print(evento.dur, "Duração")
+                            #print(evento.estado)
+                            for member in evento.team:
+                                pass
+                                #print(member)
+                        evento.dur += 1
+                        # Terminou o evento
+                        if evento.dur >= evento.estimated_dur:
+                            # Atualizar estado de trabalhadores quando evento acaba
+                            for worker in evento.team:
+                                worker.time_till_arrival = 5000
+                                worker.estado = "aguarda"
+
+                            # Atualizar estado do evento e adicionar ao historico
+                            eventos_ativos, historico, busy_locations = evento.update_status(x, eventos_ativos,
+                                                                                             historico,
+                                                                                             busy_locations)
+                    elif evento.estado == "locationinuse":
+                        if not evento.localizacao in busy_locations:
+                            # Faz a verificação se o evento estiver na "lista de espera" e o local já não estiver a ser
+                            # utilizado, coloca o evento seguinte na lista para need_workers
+                            evento.estado = "need_workers"
+                            busy_locations += [evento.localizacao]
+
+            # Passagem de tempo ou time skip
+            if idle_counter <= max_idle:
+                x += 1
+                # temp = input("Press enter to continue. \n")
+            else:
+                idle_counter = 0
+                for evento in eventos:
+                    # Verificar o próximo evento a acontecer
+                    if evento.estimated_start_time >= x:
+                        x = (evento.estimated_start_time + skip_margin)
+                        break
+
+        return historico
 
 
 
@@ -293,7 +442,7 @@ def main():
         eventos = data_Process("./data.csv").get_events()
 
         #print(eventos[len(eventos)-1].estimated_start_time)
-        simulated_annealing(eventos,equipa)
+        simulated_annealing(eventos,equipa, 1000, 1, 0.99)
 
         """historico = {}
 
