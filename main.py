@@ -51,6 +51,11 @@ def starttime_order(eventos):
     eventos = sorted(eventos, key=lambda x: x.estimated_start_time, reverse=True)
     return eventos
 
+
+def evaluate_evento(current_solution):
+    pass
+
+
 def simulated_annealing(eventos, equipa):
 
     with open("./graph.conf") as config_file:
@@ -106,7 +111,7 @@ def simulated_annealing(eventos, equipa):
 
             # Ordenar lista de eventos_ativos por priority
             eventos_ativos = priority_order(eventos_ativos)
-            current_solution = priority_order(eventos_ativos)
+
 
 
 
@@ -176,12 +181,14 @@ def simulated_annealing(eventos, equipa):
                         x = (evento.estimated_start_time + skip_margin)
                         break
 
-        soma = 0
-        for lista_eventos in historico.values():
-            for evento in lista_eventos:
-                print(evento)
-                soma+= evento.waiting_time
-        print(soma)
+
+
+        current_solution = historico
+        current_obj_value = evaluate_evento(current_solution)
+
+
+
+
 
 
 def evaluate_worker(current_solution):
