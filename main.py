@@ -57,6 +57,8 @@ def evaluate_eventos(current_solution):
     for lista_eventos in current_solution.values():
         for evento in lista_eventos:
             soma += evento.waiting_time
+    if soma == 0:
+        soma = 9999
     return soma
 
 
@@ -185,6 +187,7 @@ def simulated_annealing(eventos, equipa,T_initial, T_min, alpha):
             new_solution = neighbor_evento(current_solution,nomes_nodes, lista_nos, lista_vertex)
             new_obj_value = evaluate_eventos(new_solution)
             print("Nova solução:", new_obj_value)
+            print("Obj:", current_obj_value)
             delta = new_obj_value - current_obj_value
             if delta < 0 and new_obj_value > 0:
                 current_solution = new_solution
@@ -304,13 +307,6 @@ def neighbor_evento(current_solution, nomes_nodes, lista_nos, lista_vertex):
                 # Trabalhar eventos que teem todos os trabalhadores necessários, aka +1 tick
                 for evento in eventos_ativos:
                     if evento.estado == "active":
-                        if stuck_counter>15:
-                            #print(evento)
-                            #print(evento.dur, "Duração")
-                            #print(evento.estado)
-                            for member in evento.team:
-                                pass
-                                #print(member)
                         evento.dur += 1
                         # Terminou o evento
                         if evento.dur >= evento.estimated_dur:
@@ -343,9 +339,6 @@ def neighbor_evento(current_solution, nomes_nodes, lista_nos, lista_vertex):
                         break
 
         return historico
-
-
-
 
 
 def evaluate_worker(current_solution):
@@ -402,11 +395,11 @@ def simulated_annealing_workers(equipa, evento, lista_vertex, T_initial, T_min, 
         new_solution = neighbor_worker(current_solution, equipa, n_necessary_workers, evento, lista_vertex)
         new_obj_value = evaluate_worker(new_solution)
         delta = new_obj_value - current_obj_value
-        if delta > 0 and len(new_solution) == n_necessary_workers:
+        if delta < 0 and len(new_solution) == n_necessary_workers:
             current_solution = new_solution
             current_obj_value = new_obj_value
         else:
-            p = exp(delta / T)
+            p = exp(-delta / T)
             if rand() < p and len(new_solution) == n_necessary_workers:
                 current_solution = new_solution
                 current_obj_value = new_obj_value
