@@ -186,11 +186,11 @@ def simulated_annealing(eventos, equipa,T_initial, T_min, alpha):
             new_obj_value = evaluate_eventos(new_solution)
             print("Nova solução:", new_obj_value)
             delta = new_obj_value - current_obj_value
-            if delta > 0 and new_obj_value > 0:
+            if delta < 0 and new_obj_value > 0:
                 current_solution = new_solution
                 current_obj_value = new_obj_value
             else:
-                p = exp(delta / T)
+                p = exp(-delta / T)
                 if rand() < p and new_obj_value > 0:
                     current_solution = new_solution
                     current_obj_value = new_obj_value
