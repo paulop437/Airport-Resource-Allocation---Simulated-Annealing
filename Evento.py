@@ -8,7 +8,7 @@ class Evento:
         self.estimated_dur = estimated_dur # Ticks necessários
         self.estado = estado # notstarttime ,  locationinuse , need_workers , wait_workers , active , ended
         self.elems_on = elems_on # Elementos no evento right now
-        self.team = []
+        self.team = {}
         self.dur = dur # Ticks worked
         self.priority = priority
         self.type = type # DEPARTURE, ARRIVAL
