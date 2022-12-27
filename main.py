@@ -105,6 +105,7 @@ def simulated_annealing(T_initial, T_min, alpha):
         #Primeira solução
         current_solution = neighbor_evento(lista_vertex)
         current_obj_value = evaluate_eventos(current_solution)
+        final_solution_value = current_obj_value
         T = T_initial
 
          # Initialize an empty list to store the objective function values
@@ -118,6 +119,9 @@ def simulated_annealing(T_initial, T_min, alpha):
             print("Nova solução:", new_obj_value)
             delta = new_obj_value - current_obj_value
 
+            if new_obj_value< final_solution_value:
+                final_solution = new_solution
+                final_solution_value = new_obj_value
             #Se o delta for negativo, o tempo de espera da nova solução é menor, por isso é aceite.
             if (delta < 0) and (new_obj_value > 0):
                 current_solution = new_solution
@@ -136,27 +140,7 @@ def simulated_annealing(T_initial, T_min, alpha):
             print("Solução atual:", evaluate_eventos(current_solution))
         print("Finnished")
 
-        # Create a figure and a subplot
-        fig, ax = plt.subplots()
-
-        temps.reverse()
-
-        # Plot the data
-        ax.plot(temps, obj_values)
-
-        # Add a title, labels, and a legend
-        ax.set_title("Simulated Annealing")
-        ax.set_xlabel("Temperatura")
-        ax.set_ylabel("Tempo total de espera")
-
-        # Reverse the x-axis
-        plt.xlim(right=T_initial, left=T_min)
-
-        # Show the plot
-        plt.show()
-        print(current_solution)
-
-        return current_solution
+        return final_solution, temps, obj_values
 
 
 def neighbor_evento(lista_vertex):
@@ -517,12 +501,86 @@ def assign_workers(historico, equipa):
                     for final_worker in equipa:
                         if worker.id == final_worker.id:
                             final_worker.work_log[tempo] = evento
+    return equipa
 
-    print(equipa[0].nome)
-    for tempo in equipa[0].work_log.keys():
-        print("Tempo:" ,datetime.datetime.fromtimestamp(tempo))
-        print("Ir para:", equipa[0].work_log[tempo].localizacao)
+def worker_menu(equipa, historico, temps, obj_values, T_initial, T_min):
+    while(True):
+        print("1- Mostrar histórico.")
+        print("2- Mostrar Work Log de um trabalhador.")
+        print("3- Stats da solução.")
+        print("4- Mostrar gráfico.")
+        option = int(input("Selecione a opção que quer ->:"))
+        if option == 1:
+            print_historico(historico)
+        elif option == 2:
+            for index in range(len(equipa)):
+                print(index+1,"-",equipa[index].nome)
+            option = int(input("Selecione a opção que quer ->:"))+1
+            print_work_log(equipa[option-1].work_log)
+        elif option == 3:
+            print_status(historico, equipa)
+        elif option == 4:
+            show_graph(temps, obj_values, T_initial, T_min)
 
+
+def print_work_log(dicionario):
+    for key in dicionario.keys():
+        print("Data:",datetime.datetime.fromtimestamp(key))
+        print("Localizacao:", dicionario[key].localizacao)
+
+
+def print_historico(historico):
+    for evento_list in historico.values():
+        for evento in evento_list:
+            print("ID do Evento:", evento.id)
+            print("Hora de começar:", datetime.datetime.fromtimestamp(evento.start_time))
+            print("Localização", evento.localizacao)
+            print("------------")
+
+def print_status(historico, equipa):
+    soma = 0
+    for lista_eventos in historico.values():
+        for evento in lista_eventos:
+            soma += evento.waiting_time
+
+    print("Tempo total de espera:", soma)
+    print("")
+    media = 0
+    num_trabs = 0
+    print("Stats por trabalhador")
+    for trabalhador in equipa:
+        print("Nome:",trabalhador.nome)
+        print("Número de eventos trabalhados:", len(trabalhador.work_log))
+        dur = 0
+        for evento in trabalhador.work_log.values():
+            dur += evento.dur
+        media += dur
+        num_trabs +=1
+        print("Tempo trabalhado", dur)
+        print("---------------------")
+    media = media/num_trabs
+    print("Média total de tempo de trabalho por trabalhador:", media)
+
+
+def show_graph(temps, obj_values, T_initial, T_min):
+    # Create a figure and a subplot
+    fig, ax = plt.subplots()
+
+    temps.reverse()
+
+    # Plot the data
+    ax.plot(temps, obj_values)
+
+    # Add a title, labels, and a legend
+    ax.set_title("Simulated Annealing")
+    ax.set_xlabel("Temperatura")
+    ax.set_ylabel("Tempo total de espera")
+
+    # Reverse the x-axis
+    plt.xlim(right=T_initial, left=T_min)
+
+    # Show the plot
+    plt.show()
 
 def main():
     # Notes
@@ -544,7 +602,7 @@ def main():
     # No graphical visualization
 
     #
-
+    T_initial, T_min = 1000, 1
     with open("./graph.conf") as config_file:
         # Reading the configuration file
         config = json.load(config_file)
@@ -555,11 +613,10 @@ def main():
         for membro in config['equipa']:
             equipa.append(Trabalhador(membro['id'],membro['nome'], membro['node0']))
 
-        eventos = data_Process("./data.csv").get_events()
-
-        #print(eventos[len(eventos)-1].estimated_start_time)
-        historico = simulated_annealing( 1000, 1, 0.95)
+        historico ,temps,obj_values = simulated_annealing( T_initial, T_min, 0.95)
         assign_workers(historico, equipa)
+
+    worker_menu(equipa, historico, temps, obj_values, T_initial, T_min)
 
 
 
